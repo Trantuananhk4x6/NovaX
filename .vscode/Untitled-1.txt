@@ -1,0 +1,74 @@
+src/
+├── app/                          # Next.js App Router (Routing Layer)
+│   ├── layout.tsx                # Root layout with sidebar + providers
+│   ├── page.tsx                  # Dashboard (greeting, quick actions)
+│   ├── voices/
+│   │   └── page.tsx              # Voice explorer (library grid)
+│   ├── text-to-speech/
+│   │   └── page.tsx              # TTS page (textarea + settings + history)
+│   ├── bulk-text-to-speech/
+│   │   └── page.tsx              # Bulk/Long-form TTS
+│   ├── voice-clone/
+│   │   └── page.tsx              # Voice cloning (record / upload)
+│   └── api/                      # Mock API routes
+│       ├── tts/generate/route.ts
+│       └── voice/clone/route.ts
+│
+├── components/                   # Shared UI Layer
+│   ├── ui/                       # Primitives (Button, Slider, Input, Modal)
+│   ├── layout/                   # Sidebar, Header, PageShell
+│   └── common/                   # AudioPlayer, WaveformVisualizer, FileDropzone
+│
+├── features/                     # Feature-based Domain Layer
+│   ├── tts/
+│   │   ├── hooks/
+│   │   │   ├── useTTSForm.ts            # TTS form state + validation + submit
+│   │   │   ├── useCharacterCounter.ts    # Real-time char count + duration
+│   │   │   └── useScriptInjector.ts      # Smart template injection + SSML
+│   │   ├── services/
+│   │   │   └── tts.service.ts            # API calls to /api/tts/*
+│   │   ├── types/
+│   │   │   └── tts.types.ts              # TTSForm, TTSResponse interfaces
+│   │   └── constants/
+│   │       ├── voices.ts                 # Multi-language voice catalog
+│   │       └── templates.ts              # Script templates (review, horror, news)
+│   │
+│   ├── voice-clone/
+│   │   ├── hooks/
+│   │   │   ├── useAudioRecorder.ts       # MediaRecorder + Web Audio waveform
+│   │   │   ├── useFileUpload.ts          # Drag-drop + validation
+│   │   │   └── useVoiceCloning.ts        # Clone training flow + progress
+│   │   ├── services/
+│   │   │   └── clone.service.ts          # API calls to /api/voice/*
+│   │   └── types/
+│   │       └── clone.types.ts            # CloneState, VoiceProfile interfaces
+│   │
+│   ├── audio-player/
+│   │   ├── hooks/
+│   │   │   └── useAudioPlayer.ts         # Play/pause, time, seek, download
+│   │   └── types/
+│   │       └── player.types.ts
+│   │
+│   └── history/
+│       ├── hooks/
+│       │   └── useHistory.ts             # localStorage-based history
+│       ├── services/
+│       │   └── history.service.ts        # CRUD operations
+│       └── types/
+│           └── history.types.ts
+│
+├── lib/                          # Infrastructure
+│   └── api-client.ts             # Fetch wrapper with error handling
+│
+├── hooks/                        # Global shared hooks
+│   └── useLocalStorage.ts
+│
+├── utils/                        # Pure helpers
+│   ├── format.ts                 # formatTime (MM:SS), formatFileSize
+│   └── validation.ts             # Text, file validators
+│
+├── types/                        # Global types
+│   └── global.types.ts
+│
+└── styles/
+    └── globals.css               # Design tokens, animations, base styles

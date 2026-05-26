@@ -1,0 +1,4 @@
+# Generated audio files
+# This directory stores TTS-generated audio files
+*.wav
+*.mp3
