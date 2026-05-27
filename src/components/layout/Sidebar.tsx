@@ -18,6 +18,9 @@ import {
   ChevronRight,
   Zap,
   CreditCard,
+  Film,
+  MonitorPlay,
+  TvMinimalPlay,
 } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/nextjs';
 
@@ -27,6 +30,15 @@ const NAV_ITEMS = [
   { href: '/text-to-speech', label: 'VB -> Giọng nói', icon: AudioWaveform },
   { href: '/bulk-text-to-speech', label: 'Văn bản dài', icon: FileText },
   { href: '/voice-cloning', label: 'Sao chép giọng (Clone)', icon: Mic2 },
+];
+
+const VIDEO_ITEMS = [
+  { href: '/audio-to-video', label: 'Âm thanh → Video', icon: Film },
+  { href: '/video-to-audio', label: 'Video → Giọng nói', icon: MonitorPlay },
+];
+
+const YOUTUBE_ITEMS = [
+  { href: '/youtube-tools', label: 'Công cụ YouTube', icon: TvMinimalPlay },
 ];
 
 const EXTRA_ITEMS = [
@@ -82,6 +94,38 @@ export default function Sidebar() {
         ))}
 
         {!sidebarCollapsed && (
+          <div className="sidebar-section-label">Video Studio</div>
+        )}
+
+        {VIDEO_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`nav-item ${pathname === item.href ? 'active' : ''}`}
+            title={sidebarCollapsed ? item.label : undefined}
+          >
+            <item.icon size={20} />
+            {!sidebarCollapsed && <span>{item.label}</span>}
+          </Link>
+        ))}
+
+        {!sidebarCollapsed && (
+          <div className="sidebar-section-label">YouTube MMO</div>
+        )}
+
+        {YOUTUBE_ITEMS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`nav-item ${pathname === item.href ? 'active' : ''}`}
+            title={sidebarCollapsed ? item.label : undefined}
+          >
+            <item.icon size={20} />
+            {!sidebarCollapsed && <span>{item.label}</span>}
+          </Link>
+        ))}
+
+        {!sidebarCollapsed && (
           <div className="sidebar-section-label">Khác</div>
         )}
 
@@ -111,14 +155,14 @@ export default function Sidebar() {
               <div className="quota-number">
                 {user.charsRemaining.toLocaleString()}
               </div>
-              <div className="quota-expiry">
+              <div className="quota-expiry" style={{ marginBottom: '16px' }}>
                 Hết hạn vào: {new Date(user.quotaExpiry).toLocaleDateString('vi-VN')}
               </div>
-            </div>
 
-            <Link href="/pricing" className="topup-btn">
-              Nạp thêm
-            </Link>
+              <Link href="/pricing" className="topup-btn">
+                Nạp thêm
+              </Link>
+            </div>
           </>
         )}
 

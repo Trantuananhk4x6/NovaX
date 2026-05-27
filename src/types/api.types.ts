@@ -33,7 +33,7 @@ export interface HistoryItem {
   /** Creation timestamp */
   createdAt: string;
   /** Type of generation */
-  type: 'tts' | 'bulk-tts' | 'clone-preview';
+  type: 'tts' | 'bulk-tts' | 'clone-preview' | 'audio-to-video' | 'video-to-audio';
 }
 
 /** User profile (simplified for localStorage) */

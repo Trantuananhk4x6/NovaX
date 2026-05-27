@@ -113,6 +113,18 @@ export default function VoiceCloningPage() {
     }
   };
 
+  const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (uploadedFile) {
+      const url = URL.createObjectURL(uploadedFile);
+      setUploadedPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setUploadedPreviewUrl(null);
+    }
+  }, [uploadedFile]);
+
   // Success state render
   if (cloning.result?.success) {
     return (
@@ -150,7 +162,7 @@ export default function VoiceCloningPage() {
     );
   }
 
-  const previewUrl = activeTab === 'record' ? recorder.audioUrl : (uploadedFile ? URL.createObjectURL(uploadedFile) : null);
+  const previewUrl = activeTab === 'record' ? recorder.audioUrl : uploadedPreviewUrl;
 
   return (
     <MainLayout>

@@ -154,6 +154,60 @@ export default function DashboardPage() {
             </div>
           </div>
         </Link>
+
+        <Link href="/audio-to-video" className="quick-action-card">
+          <div
+            className="quick-action-gradient"
+            style={{
+              background: 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)',
+              borderRadius: '12px',
+            }}
+          />
+          <div className="quick-action-info">
+            <h3>Âm thanh → Video</h3>
+            <p>Chuyển đổi âm thanh thành video với AI tự động</p>
+            <div className="quick-action-link">
+              <span>Tạo video</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/video-to-audio" className="quick-action-card">
+          <div
+            className="quick-action-gradient"
+            style={{
+              background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+              borderRadius: '12px',
+            }}
+          />
+          <div className="quick-action-info">
+            <h3>Video → Giọng nói</h3>
+            <p>AI phân tích video và tạo giọng nói phù hợp</p>
+            <div className="quick-action-link">
+              <span>Thêm voice</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/youtube-tools" className="quick-action-card">
+          <div
+            className="quick-action-gradient"
+            style={{
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              borderRadius: '12px',
+            }}
+          />
+          <div className="quick-action-info">
+            <h3>Công cụ YouTube MMO</h3>
+            <p>Thumbnail AI, SEO, Batch video và lịch đăng bài</p>
+            <div className="quick-action-link">
+              <span>Xem tools</span>
+              <ArrowRight size={16} />
+            </div>
+          </div>
+        </Link>
       </div>
     </MainLayout>
   );
