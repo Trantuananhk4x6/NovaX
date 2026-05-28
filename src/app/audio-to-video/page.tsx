@@ -83,8 +83,8 @@ export default function AudioToVideoPage() {
       <div className="page-header">
         <h1><Film size={24} /> Âm thanh → Video</h1>
         <div className="page-header-actions">
-          <button className="header-btn"><ThumbsUp size={16} /><span>Feedback</span></button>
-          <button className="header-btn"><HelpCircle size={16} /><span>Trợ giúp</span></button>
+          <a href="mailto:support@novax.ai?subject=Feedback NovaX" className="header-btn" style={{ textDecoration: 'none' }}><ThumbsUp size={16} /><span>Feedback</span></a>
+          <a href="mailto:support@novax.ai?subject=Cần hỗ trợ NovaX" className="header-btn" style={{ textDecoration: 'none' }}><HelpCircle size={16} /><span>Trợ giúp</span></a>
         </div>
       </div>
 

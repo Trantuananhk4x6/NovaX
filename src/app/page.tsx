@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
 import { useUser, UserButton } from '@clerk/nextjs';
@@ -18,10 +19,21 @@ import {
 
 export default function DashboardPage() {
   const { user: clerkUser, isLoaded } = useUser();
+  const router = useRouter();
   const [quickText, setQuickText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const displayName = isLoaded ? (clerkUser?.fullName || clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'bạn') : '...';
+
+  const handleCreateVoice = () => {
+    if (quickText.trim()) {
+      // Save quick text to sessionStorage so TTS page can pick it up
+      try {
+        sessionStorage.setItem('novax_quick_text', quickText);
+      } catch { /* ignore */ }
+    }
+    router.push('/text-to-speech');
+  };
 
   return (
     <MainLayout>
@@ -29,14 +41,22 @@ export default function DashboardPage() {
       <div className="page-header">
         <div />
         <div className="page-header-actions">
-          <button className="header-btn">
+          <a 
+            href="mailto:support@novax.ai?subject=Góp ý về NovaX"
+            className="header-btn"
+            style={{ textDecoration: 'none' }}
+          >
             <ThumbsUp size={16} />
             <span>Góp ý</span>
-          </button>
-          <button className="header-btn">
+          </a>
+          <a 
+            href="mailto:support@novax.ai?subject=Cần hỗ trợ NovaX"
+            className="header-btn"
+            style={{ textDecoration: 'none' }}
+          >
             <HelpCircle size={16} />
             <span>Cần hỗ trợ?</span>
-          </button>
+          </a>
           <div className="user-avatar-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
             <UserButton afterSignOutUrl="/sign-in" />
           </div>
@@ -71,9 +91,9 @@ export default function DashboardPage() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-          <Link href="/text-to-speech" className="btn btn-primary btn-lg">
+          <button onClick={handleCreateVoice} className="btn btn-primary btn-lg">
             Tạo giọng nói
-          </Link>
+          </button>
         </div>
       </div>
 

@@ -156,9 +156,14 @@ export function useVideoToAudio() {
 
   // ── Step 3: Generate Voice & Export ─────────────────────
 
-  const startGeneration = useCallback(() => {
+  const startGeneration = useCallback(async () => {
     if (!state.editedScript.trim()) {
       setState(prev => ({ ...prev, error: 'Vui lòng nhập script cho voice.' }));
+      return;
+    }
+
+    if (!state.voiceSettings.voiceId) {
+      setState(prev => ({ ...prev, error: 'Vui lòng chọn giọng nói trước khi tạo.' }));
       return;
     }
 
@@ -166,34 +171,59 @@ export function useVideoToAudio() {
       ...prev,
       currentStep: 3,
       isGenerating: true,
-      progress: 0,
+      progress: 10,
       progressLabel: 'Đang chuẩn bị...',
+      error: null,
     }));
 
-    const phases = [
-      { progress: 20, label: 'Đang tạo giọng nói AI...' },
-      { progress: 45, label: 'Đang đồng bộ với video...' },
-      { progress: 65, label: 'Đang điều chỉnh tốc độ...' },
-      { progress: 80, label: 'Đang ghép âm thanh vào video...' },
-      { progress: 95, label: 'Đang xuất file...' },
-      { progress: 100, label: 'Hoàn tất!' },
-    ];
+    try {
+      // Update progress UI
+      setState(prev => ({ ...prev, progress: 25, progressLabel: 'Đang tạo giọng nói AI...' }));
 
-    phases.forEach((phase, index) => {
-      setTimeout(() => {
-        setState(prev => ({
-          ...prev,
-          progress: phase.progress,
-          progressLabel: phase.label,
-          ...(phase.progress === 100 ? {
-            isGenerating: false,
-            outputVideoUrl: prev.videoUrl, // Demo: use original video
-            outputAudioUrl: prev.videoUrl,
-          } : {}),
-        }));
-      }, (index + 1) * 1000);
-    });
-  }, [state.editedScript]);
+      const response = await fetch('/api/tts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: state.editedScript,
+          voiceId: state.voiceSettings.voiceId,
+          speed: state.voiceSettings.speed,
+          languageCode: state.voiceSettings.languageCode || 'vi-VN',
+          filePrefix: 'video_voice',
+        }),
+      });
+
+      setState(prev => ({ ...prev, progress: 75, progressLabel: 'Đang xử lý kết quả...' }));
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: `Lỗi server: ${response.status}` }));
+        throw new Error(err.error || `Lỗi server: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.audioUrl) {
+        throw new Error(data.error || 'Không nhận được audio từ server.');
+      }
+
+      setState(prev => ({
+        ...prev,
+        progress: 100,
+        progressLabel: 'Hoàn tất!',
+        isGenerating: false,
+        outputAudioUrl: data.audioUrl,
+        outputVideoUrl: data.audioUrl, // use audio url as output indicator
+      }));
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Đã xảy ra lỗi không xác định.';
+      setState(prev => ({
+        ...prev,
+        isGenerating: false,
+        error: message,
+        currentStep: 2, // Go back to step 2 on error
+      }));
+    }
+  }, [state.editedScript, state.voiceSettings]);
 
   const goToStep = useCallback((step: VideoToAudioStep) => {
     setState(prev => ({ ...prev, currentStep: step }));

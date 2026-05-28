@@ -8,7 +8,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import { useApp } from '@/context/AppContext';
 import { usePayment } from '@/hooks/use-payment';
 import { PRICING_PLANS } from '@/constants/pricing';
-import { CreditCard, Check, X, ShieldCheck, Zap, Download } from 'lucide-react';
+import { Check, X, ShieldCheck, Zap, Download } from 'lucide-react';
 import Image from 'next/image';
 
 export default function PricingPage() {
@@ -17,7 +17,6 @@ export default function PricingPage() {
     payment,
     selectPlan,
     generateQR,
-    simulatePaymentSuccess,
     closePayment,
   } = usePayment();
 
@@ -160,17 +159,18 @@ export default function PricingPage() {
                 </div>
 
                 <div style={{ padding: '16px', background: 'rgba(139, 92, 246, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', margin: '24px 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                  Hệ thống sẽ tự động xác nhận thanh toán sau 1-3 phút. Nếu bạn cần hỗ trợ, vui lòng liên hệ CSKH với mã giao dịch ở trên.
+                  <strong>⏰ Sau khi chuyển khoản:</strong><br />
+                  Hệ thống sẽ tự động xác nhận trong vòng <strong>5-15 phút</strong>. Nếu sau 30 phút chưa được kích hoạt, vui lòng liên hệ hỗ trợ kèm mã giao dịch:<br />
+                  <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: 4 }}>{payment.transactionRef}</code>
                 </div>
 
-                {/* Demo Button to simulate successful webhook payment */}
-                <button 
-                  className="btn btn-secondary" 
-                  style={{ width: '100%', marginTop: '8px' }}
-                  onClick={simulatePaymentSuccess}
+                <a 
+                  href={`mailto:support@novax.ai?subject=Xác nhận thanh toán ${payment.transactionRef}&body=Mã giao dịch: ${payment.transactionRef}%0AGói: ${payment.selectedPlan?.name}%0ASố tiền: ${payment.selectedPlan?.priceLabel}`}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', textDecoration: 'none', textAlign: 'center' }}
                 >
-                  <CreditCard size={16} /> (Demo) Giả lập thanh toán thành công
-                </button>
+                  📧 Liên hệ hỗ trợ
+                </a>
               </div>
             )}
           </div>

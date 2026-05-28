@@ -3,7 +3,7 @@
 // Text-to-Speech Page — Full TTS interface with settings panel
 // ============================================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import AudioPlayer from '@/components/player/AudioPlayer';
 import { useApp } from '@/context/AppContext';
@@ -35,7 +35,10 @@ import {
   Gamepad2,
   Heart,
   Ghost,
-  LucideIcon
+  LucideIcon,
+  Play,
+  Download,
+  Trash2,
 } from 'lucide-react';
 
 // Icon mapping for templates
@@ -44,8 +47,24 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default function TextToSpeechPage() {
-  const { voices, history, addHistoryItem } = useApp();
+  const { voices, history, addHistoryItem, removeHistoryItem } = useApp();
   const [activeTab, setActiveTab] = useState<'settings' | 'history'>('settings');
+  const [playingHistoryId, setPlayingHistoryId] = useState<string | null>(null);
+  const historyAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleHistoryPlay = (itemId: string, audioUrl: string) => {
+    if (playingHistoryId === itemId) {
+      historyAudioRef.current?.pause();
+      setPlayingHistoryId(null);
+      return;
+    }
+    if (historyAudioRef.current) historyAudioRef.current.pause();
+    const audio = new Audio(audioUrl);
+    historyAudioRef.current = audio;
+    audio.onended = () => setPlayingHistoryId(null);
+    audio.onerror = () => setPlayingHistoryId(null);
+    audio.play().then(() => setPlayingHistoryId(itemId)).catch(() => setPlayingHistoryId(null));
+  };
 
   const {
     ttsForm,
@@ -104,8 +123,8 @@ export default function TextToSpeechPage() {
           Text to Speech
         </h1>
         <div className="page-header-actions">
-          <button className="header-btn"><ThumbsUp size={16} /><span>Feedback</span></button>
-          <button className="header-btn"><HelpCircle size={16} /><span>Need help?</span></button>
+          <a href="mailto:support@novax.ai?subject=Feedback NovaX" className="header-btn" style={{ textDecoration: 'none' }}><ThumbsUp size={16} /><span>Feedback</span></a>
+          <a href="mailto:support@novax.ai?subject=Cần hỗ trợ NovaX TTS" className="header-btn" style={{ textDecoration: 'none' }}><HelpCircle size={16} /><span>Need help?</span></a>
         </div>
       </div>
 
@@ -399,6 +418,33 @@ export default function TextToSpeechPage() {
                           <span>·</span>
                           <span>{item.charCount} ký tự</span>
                         </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                        <button
+                          className="voice-play-btn"
+                          style={{ width: 28, height: 28 }}
+                          onClick={() => handleHistoryPlay(item.id, item.audioUrl)}
+                          title={playingHistoryId === item.id ? 'Dừng' : 'Nghe lại'}
+                        >
+                          {playingHistoryId === item.id ? <PauseIcon size={12} /> : <Play size={12} style={{ marginLeft: 1 }} />}
+                        </button>
+                        <a
+                          href={item.audioUrl}
+                          download
+                          className="voice-play-btn"
+                          style={{ width: 28, height: 28, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Tải về"
+                        >
+                          <Download size={12} />
+                        </a>
+                        <button
+                          className="voice-play-btn"
+                          style={{ width: 28, height: 28, color: 'var(--accent-red)' }}
+                          onClick={() => removeHistoryItem(item.id)}
+                          title="Xóa"
+                        >
+                          <Trash2 size={12} />
+                        </button>
                       </div>
                     </div>
                   ))

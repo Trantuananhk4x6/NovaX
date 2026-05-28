@@ -172,8 +172,8 @@ export default function VoiceCloningPage() {
           Voice Cloning
         </h1>
         <div className="page-header-actions">
-          <button className="header-btn"><ThumbsUp size={16} /><span>Feedback</span></button>
-          <button className="header-btn"><HelpCircle size={16} /><span>Need help?</span></button>
+          <a href="mailto:support@novax.ai?subject=Feedback NovaX" className="header-btn" style={{ textDecoration: 'none' }}><ThumbsUp size={16} /><span>Feedback</span></a>
+          <a href="mailto:support@novax.ai?subject=Cần hỗ trợ Voice Cloning" className="header-btn" style={{ textDecoration: 'none' }}><HelpCircle size={16} /><span>Need help?</span></a>
         </div>
       </div>
 

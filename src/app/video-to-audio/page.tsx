@@ -70,8 +70,8 @@ export default function VideoToAudioPage() {
       <div className="page-header">
         <h1><MonitorPlay size={24} /> Video → Giọng nói</h1>
         <div className="page-header-actions">
-          <button className="header-btn"><ThumbsUp size={16} /><span>Feedback</span></button>
-          <button className="header-btn"><HelpCircle size={16} /><span>Trợ giúp</span></button>
+          <a href="mailto:support@novax.ai?subject=Feedback NovaX" className="header-btn" style={{ textDecoration: 'none' }}><ThumbsUp size={16} /><span>Feedback</span></a>
+          <a href="mailto:support@novax.ai?subject=Cần hỗ trợ NovaX" className="header-btn" style={{ textDecoration: 'none' }}><HelpCircle size={16} /><span>Trợ giúp</span></a>
         </div>
       </div>
 
@@ -337,34 +337,41 @@ export default function VideoToAudioPage() {
               <div className="cloning-bar">
                 <div className="cloning-bar-fill" style={{ width: `${state.progress}%` }} />
               </div>
+              <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', marginTop: 12, textAlign: 'center' }}>
+                Đang tạo giọng nói thực tế bằng AI...
+              </p>
             </div>
-          ) : state.outputVideoUrl ? (
-            <div className="glass-card" style={{ textAlign: 'center', padding: '64px 24px' }}>
+          ) : state.outputAudioUrl ? (
+            <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                 <CheckCircle2 size={40} color="var(--accent-green)" />
               </div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>Giọng nói đã được tạo thành công!</h2>
               <p style={{ color: 'var(--text-secondary)', marginBottom: 32 }}>
-                Video của bạn đã được gắn giọng nói AI phù hợp với ngữ cảnh.
+                Script của bạn đã được chuyển đổi sang giọng nói AI. Bạn có thể nghe thử và tải về bên dưới.
               </p>
 
-              {state.videoUrl && (
-                <div style={{ marginBottom: 24 }}>
-                  <video
-                    src={state.videoUrl}
-                    controls
-                    style={{ width: '100%', maxHeight: 400, borderRadius: 'var(--radius-md)' }}
-                  />
-                </div>
-              )}
+              {/* Audio Player */}
+              <div style={{ marginBottom: 32, textAlign: 'left', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                <audio 
+                  controls 
+                  src={state.outputAudioUrl} 
+                  style={{ width: '100%' }}
+                />
+              </div>
 
               <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
                 <button className="btn btn-secondary" onClick={reset}>
-                  Tạo video mới
+                  Tạo giọng mới
                 </button>
-                <button className="btn btn-primary btn-lg">
-                  <Download size={18} /> Tải về Video + Voice
-                </button>
+                <a 
+                  href={state.outputAudioUrl} 
+                  download="video_voice.wav"
+                  className="btn btn-primary btn-lg"
+                  style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
+                >
+                  <Download size={18} /> Tải về Audio
+                </a>
               </div>
             </div>
           ) : null}

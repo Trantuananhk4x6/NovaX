@@ -3,7 +3,7 @@
 // Voices Explorer Page — Browse, filter, and preview AI voices
 // ============================================================================
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useApp } from '@/context/AppContext';
 import { COUNTRIES } from '@/constants/voices';
@@ -17,7 +17,8 @@ import {
   Globe2,
   Mic2,
   User,
-  Star
+  Star,
+  Loader2,
 } from 'lucide-react';
 
 const CATEGORY_FILTERS: { value: VoiceCategory | 'all'; label: string }[] = [
@@ -37,9 +38,10 @@ export default function VoicesPage() {
   
   // Audio preview state
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [loadingVoiceId, setLoadingVoiceId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handlePlayPreview = (voiceId: string, previewUrl?: string) => {
+  const handlePlayPreview = useCallback(async (voiceId: string, previewUrl?: string, voiceName?: string) => {
     // If clicking the same voice that is playing, pause it
     if (playingVoiceId === voiceId) {
       audioRef.current?.pause();
@@ -47,33 +49,54 @@ export default function VoicesPage() {
       return;
     }
 
-    // Stop current
+    // Stop current audio
     if (audioRef.current) {
       audioRef.current.pause();
+      setPlayingVoiceId(null);
     }
 
-    // Play new
+    // If there's a previewUrl, play it directly
     if (previewUrl) {
       const audio = new Audio(previewUrl);
       audioRef.current = audio;
-      
       audio.onended = () => setPlayingVoiceId(null);
-      audio.onerror = () => setPlayingVoiceId(null); // Fallback if file missing
-      
-      audio.play().then(() => {
-        setPlayingVoiceId(voiceId);
-      }).catch(() => {
-        // If preview audio doesn't exist yet, just mock it
-        setPlayingVoiceId(null);
-      });
-    } else {
-      // Mock playing state for voices without actual audio files yet
-      setPlayingVoiceId(voiceId);
-      setTimeout(() => {
-        if (playingVoiceId === voiceId) setPlayingVoiceId(null);
-      }, 3000);
+      audio.onerror = () => setPlayingVoiceId(null);
+      audio.play().then(() => setPlayingVoiceId(voiceId)).catch(() => setPlayingVoiceId(null));
+      return;
     }
-  };
+
+    // Otherwise, generate a real TTS preview via API
+    setLoadingVoiceId(voiceId);
+    try {
+      const sampleText = 'Xin chào! Đây là giọng nói của tôi. Rất vui được gặp bạn hôm nay.';
+      const response = await fetch('/api/tts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: sampleText,
+          voiceId,
+          speed: 1.0,
+          languageCode: 'vi-VN',
+          filePrefix: `preview_${voiceId}`,
+        }),
+      });
+
+      if (!response.ok) throw new Error('API error');
+      const data = await response.json();
+
+      if (data.success && data.audioUrl) {
+        const audio = new Audio(data.audioUrl);
+        audioRef.current = audio;
+        audio.onended = () => setPlayingVoiceId(null);
+        audio.onerror = () => setPlayingVoiceId(null);
+        audio.play().then(() => setPlayingVoiceId(voiceId)).catch(() => setPlayingVoiceId(null));
+      }
+    } catch {
+      // Silent fail — just don't play anything
+    } finally {
+      setLoadingVoiceId(null);
+    }
+  }, [playingVoiceId]);
 
   // Filter voices based on search, category, and language
   const filteredVoices = useMemo(() => {
@@ -201,10 +224,17 @@ export default function VoicesPage() {
                 <div className="voice-actions">
                   <button 
                     className="voice-play-btn"
-                    onClick={() => handlePlayPreview(voice.id, voice.previewUrl)}
-                    aria-label="Nghe thử"
+                    onClick={() => handlePlayPreview(voice.id, voice.previewUrl, voice.name)}
+                    aria-label={loadingVoiceId === voice.id ? 'Đang tạo preview...' : playingVoiceId === voice.id ? 'Dừng lại' : 'Nghe thử'}
+                    disabled={loadingVoiceId === voice.id}
+                    title={loadingVoiceId === voice.id ? 'Đang tạo preview...' : 'Nghe thử giọng nói này'}
                   >
-                    {playingVoiceId === voice.id ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 2 }} />}
+                    {loadingVoiceId === voice.id 
+                      ? <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />
+                      : playingVoiceId === voice.id 
+                        ? <Pause size={16} /> 
+                        : <Play size={16} style={{ marginLeft: 2 }} />
+                    }
                   </button>
                 </div>
               </div>

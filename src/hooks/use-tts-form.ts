@@ -5,7 +5,7 @@
 //           script injection, SSML insertion, validation, and API submission
 // ============================================================================
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { TTSFormState, DEFAULT_TTS_FORM, TTSGenerationState, TTS_CHAR_LIMIT } from '@/types/tts.types';
 import {
   countCharacters,
@@ -48,6 +48,17 @@ export function useTTSForm(charLimit: number = TTS_CHAR_LIMIT): UseTTSFormReturn
 
   // ── Textarea ref for cursor position tracking ──────────
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // ── Load quick text from Dashboard if navigated from there ─
+  useEffect(() => {
+    try {
+      const quickText = sessionStorage.getItem('novax_quick_text');
+      if (quickText) {
+        setTtsForm(prev => ({ ...prev, text: quickText }));
+        sessionStorage.removeItem('novax_quick_text');
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   // ── Derived state: character count (excludes SSML tags) ─
   const charCount = useMemo(() => countCharacters(ttsForm.text), [ttsForm.text]);
