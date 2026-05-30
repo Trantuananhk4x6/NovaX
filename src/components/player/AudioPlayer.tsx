@@ -46,6 +46,9 @@ export default function AudioPlayer({ audioUrl, filename = 'voice_output.mp3' }:
         ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleTimeUpdate}
+        onDurationChange={handleTimeUpdate}
+        onLoadedData={handleTimeUpdate}
+        onCanPlay={handleTimeUpdate}
         preload="metadata"
       />
 

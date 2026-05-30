@@ -21,6 +21,7 @@ import {
   Film,
   MonitorPlay,
   TvMinimalPlay,
+  Settings,
 } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/nextjs';
 
@@ -43,6 +44,7 @@ const YOUTUBE_ITEMS = [
 
 const EXTRA_ITEMS = [
   { href: '/pricing', label: 'Nạp thêm', icon: CreditCard },
+  { href: '/settings', label: 'Cài đặt', icon: Settings },
   { href: '#', label: 'Trợ giúp & Hỗ trợ', icon: HelpCircle },
 ];
 

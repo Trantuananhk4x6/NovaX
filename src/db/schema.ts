@@ -4,7 +4,8 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(), // Clerk User ID
   email: text("email").notNull(),
   plan: text("plan").default("free"), // 'free' or 'pro'
-  credits: integer("credits").default(100000), // Default 100k characters
+  credits: integer("credits").default(100000),
+  ttsProvider: text("tts_provider").default("gemini"), // 'gemini' | 'elevenlabs'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -25,5 +26,15 @@ export const generationHistory = pgTable("generation_history", {
   audioUrl: text("audio_url").notNull(),
   voiceId: text("voice_id").notNull(),
   durationMs: integer("duration_ms"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Cache table for voice previews — generated once, reused forever
+export const voicePreviews = pgTable("voice_previews", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull(), // 'gemini' | 'elevenlabs'
+  voiceId: text("voice_id").notNull(),
+  previewText: text("preview_text").notNull(),
+  audioUrl: text("audio_url").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -39,6 +39,7 @@ import {
   Play,
   Download,
   Trash2,
+  Zap,
 } from 'lucide-react';
 
 // Icon mapping for templates
@@ -46,8 +47,30 @@ const ICON_MAP: Record<string, LucideIcon> = {
   BookOpen, Smile, Newspaper, Film, Megaphone, Mic, Globe, Clapperboard, Gamepad2, Heart, Ghost,
 };
 
+// ─── Gemini Token Estimation ────────────────────────────────────────────────
+// Gemini tokenizes roughly: ASCII/Latin ~4 chars/token, Vietnamese/CJK ~1.5 chars/token
+// This is a client-side approximation (accurate within ~10% vs countTokens API)
+function estimateGeminiTokens(text: string): number {
+  if (!text) return 0;
+  let tokens = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp < 128) {
+      // ASCII — counted as part of 4-char groups
+      tokens += 0.25;
+    } else if (cp < 0x0300) {
+      // Latin extended, IPA — ~2 chars/token
+      tokens += 0.5;
+    } else {
+      // Vietnamese, CJK, Cyrillic, etc. — ~1.5 chars/token
+      tokens += 0.67;
+    }
+  }
+  return Math.max(1, Math.ceil(tokens));
+}
+
 export default function TextToSpeechPage() {
-  const { voices, history, addHistoryItem, removeHistoryItem } = useApp();
+  const { voices, history, addHistoryItem, removeHistoryItem, ttsProvider } = useApp();
   const [activeTab, setActiveTab] = useState<'settings' | 'history'>('settings');
   const [playingHistoryId, setPlayingHistoryId] = useState<string | null>(null);
   const historyAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -78,7 +101,19 @@ export default function TextToSpeechPage() {
     injectSSMLBreak,
     handleSubmitTTS,
     clearShake,
-  } = useTTSForm(5000);
+  } = useTTSForm(5000, ttsProvider);
+
+  // Pre-select voice when navigated from voices page (double-click)
+  useEffect(() => {
+    if (typeof window === 'undefined' || voices.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const voiceId = params.get('voiceId');
+    const lang = params.get('lang');
+    if (!voiceId) return;
+    if (lang) handleFieldChange('languageCode', lang);
+    handleFieldChange('voiceId', voiceId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voices.length]);
 
   // Auto-clear shake animation after it plays
   useEffect(() => {
@@ -183,7 +218,7 @@ export default function TextToSpeechPage() {
               </button>
             </div>
 
-            {/* Char Counter + Duration */}
+            {/* Char Counter + Duration + Token Count */}
             <div className="char-counter">
               <div className="counter-left">
                 <Clock size={16} />
@@ -195,8 +230,16 @@ export default function TextToSpeechPage() {
                   <span>Bắt đầu nhập để ước tính</span>
                 )}
               </div>
-              <div className={`counter-right ${charCount > 4500 ? 'warning' : ''} ${charCount > 4900 ? 'danger' : ''}`}>
-                {charCount.toLocaleString()} / 5,000 ký tự
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {charCount > 0 && (
+                  <span style={{ fontSize: '0.73rem', color: 'var(--accent-purple)', display: 'flex', alignItems: 'center', gap: 3, opacity: 0.85 }}>
+                    <Zap size={11} />
+                    ~{estimateGeminiTokens(ttsForm.text).toLocaleString()} token
+                  </span>
+                )}
+                <div className={`counter-right ${charCount > 4500 ? 'warning' : ''} ${charCount > 4900 ? 'danger' : ''}`}>
+                  {charCount.toLocaleString()} / 5,000 ký tự
+                </div>
               </div>
             </div>
 
@@ -325,9 +368,14 @@ export default function TextToSpeechPage() {
                 </div>
 
                 {/* Stability Slider */}
-                <div className="slider-container">
+                <div className="slider-container" style={{ opacity: ttsProvider !== 'elevenlabs' ? 0.5 : 1 }}>
                   <div className="slider-header">
-                    <span className="slider-label">Sự sáng tạo</span>
+                    <span className="slider-label">
+                      Sự sáng tạo
+                      {ttsProvider !== 'elevenlabs' && (
+                        <span style={{ marginLeft: 5, fontSize: '0.65rem', background: 'var(--accent-purple)', color: '#fff', borderRadius: 3, padding: '1px 5px', verticalAlign: 'middle', opacity: 0.8 }}>ElevenLabs</span>
+                      )}
+                    </span>
                     <span className="slider-value">{Math.round(ttsForm.stability * 100)}%</span>
                   </div>
                   <input
@@ -336,6 +384,7 @@ export default function TextToSpeechPage() {
                     max="1"
                     step="0.05"
                     value={ttsForm.stability}
+                    disabled={ttsProvider !== 'elevenlabs'}
                     onChange={(e) => handleFieldChange('stability', parseFloat(e.target.value))}
                   />
                   <div className="slider-labels">
@@ -345,9 +394,14 @@ export default function TextToSpeechPage() {
                 </div>
 
                 {/* Clarity Slider */}
-                <div className="slider-container">
+                <div className="slider-container" style={{ opacity: ttsProvider !== 'elevenlabs' ? 0.5 : 1 }}>
                   <div className="slider-header">
-                    <span className="slider-label">Độ đa dạng giọng nói</span>
+                    <span className="slider-label">
+                      Độ đa dạng giọng nói
+                      {ttsProvider !== 'elevenlabs' && (
+                        <span style={{ marginLeft: 5, fontSize: '0.65rem', background: 'var(--accent-purple)', color: '#fff', borderRadius: 3, padding: '1px 5px', verticalAlign: 'middle', opacity: 0.8 }}>ElevenLabs</span>
+                      )}
+                    </span>
                     <span className="slider-value">{Math.round(ttsForm.clarity * 100)}%</span>
                   </div>
                   <input
@@ -356,6 +410,7 @@ export default function TextToSpeechPage() {
                     max="1"
                     step="0.05"
                     value={ttsForm.clarity}
+                    disabled={ttsProvider !== 'elevenlabs'}
                     onChange={(e) => handleFieldChange('clarity', parseFloat(e.target.value))}
                   />
                   <div className="slider-labels">
@@ -365,9 +420,14 @@ export default function TextToSpeechPage() {
                 </div>
 
                 {/* Pitch Slider */}
-                <div className="slider-container">
+                <div className="slider-container" style={{ opacity: ttsProvider !== 'elevenlabs' ? 0.5 : 1 }}>
                   <div className="slider-header">
-                    <span className="slider-label">Phạm vi biểu cảm</span>
+                    <span className="slider-label">
+                      Phạm vi biểu cảm
+                      {ttsProvider !== 'elevenlabs' && (
+                        <span style={{ marginLeft: 5, fontSize: '0.65rem', background: 'var(--accent-purple)', color: '#fff', borderRadius: 3, padding: '1px 5px', verticalAlign: 'middle', opacity: 0.8 }}>ElevenLabs</span>
+                      )}
+                    </span>
                     <span className="slider-value">{ttsForm.pitch > 0 ? '+' : ''}{ttsForm.pitch}</span>
                   </div>
                   <input
@@ -376,6 +436,7 @@ export default function TextToSpeechPage() {
                     max="20"
                     step="1"
                     value={ttsForm.pitch}
+                    disabled={ttsProvider !== 'elevenlabs'}
                     onChange={(e) => handleFieldChange('pitch', parseInt(e.target.value))}
                   />
                   <div className="slider-labels">

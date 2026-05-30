@@ -33,7 +33,7 @@ interface UseTTSFormReturn {
   clearShake: () => void;
 }
 
-export function useTTSForm(charLimit: number = TTS_CHAR_LIMIT): UseTTSFormReturn {
+export function useTTSForm(charLimit: number = TTS_CHAR_LIMIT, provider: string = 'gemini'): UseTTSFormReturn {
   // ── Core form state ────────────────────────────────────
   const [ttsForm, setTtsForm] = useState<TTSFormState>(DEFAULT_TTS_FORM);
 
@@ -191,6 +191,7 @@ export function useTTSForm(charLimit: number = TTS_CHAR_LIMIT): UseTTSFormReturn
           clarity: ttsForm.clarity,
           languageCode: ttsForm.languageCode,
           filePrefix: ttsForm.filePrefix,
+          provider, // truyền provider để server biết dùng Gemini hay ElevenLabs
         }),
       });
 

@@ -1,294 +1,75 @@
 // ============================================================================
-// TTS Generate API Route — Real Gemini Flash TTS Integration & Fish Audio
-// Calls Google AI Studio's Gemini Flash TTS for default voices
-// Calls Fish Audio for custom cloned voices
+// POST /api/tts/generate
+// Unified TTS generation supporting Gemini and ElevenLabs providers.
+// Auto-detects provider from voiceId prefix or explicit provider field.
 // ============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
-import { Buffer } from 'buffer';
+import { getProvider, ProviderName } from '@/lib/tts/providers';
 
 export const dynamic = 'force-dynamic';
 
-const TTS_MODEL = 'gemini-3.1-flash-tts-preview';
-
-// Map voice IDs to Gemini voice names
-const VOICE_MAP: Record<string, string> = {
-  // Vietnamese (Strict Gemini 5 Voices)
-  'vi-aoede': 'Aoede',
-  'vi-kore': 'Kore',
-  'vi-charon': 'Charon',
-  'vi-fenrir': 'Fenrir',
-  'vi-puck': 'Puck',
-  // English
-  'en-james': 'Charon',
-  'en-sarah': 'Leda',
-  'en-michael': 'Puck',
-  'en-emma': 'Zephyr',
-  'en-david': 'Kore',
-  'en-olivia': 'Aoede',
-  // Spanish
-  'es-animals': 'Puck',
-  'es-tbn-dl': 'Kore',
-  'es-carmen': 'Leda',
-  'es-pablo': 'Charon',
-  // Russian
-  'ru-khao': 'Puck',
-  'ru-natasha': 'Leda',
-  'ru-dmitri': 'Charon',
-  'ru-anna': 'Aoede',
-  // Japanese
-  'ja-yuki': 'Leda',
-  'ja-takeshi': 'Puck',
-  'ja-sakura': 'Zephyr',
-  'ja-kenji': 'Charon',
-  // Korean
-  'ko-soyeon': 'Leda',
-  'ko-junhyeok': 'Puck',
-  'ko-minji': 'Zephyr',
-  'ko-hyunwoo': 'Kore',
-  // French
-  'fr-jacques': 'Charon',
-  'fr-chloe': 'Leda',
-  'fr-philippe': 'Puck',
-  'fr-amelie': 'Aoede',
-  // Science
-  'en-science': 'Kore',
-  'es-science': 'Leda',
-};
-
-// Language code mapping for Gemini
-const LANGUAGE_MAP: Record<string, string> = {
-  'vi-VN': 'vi-VN',
-  'en-US': 'en-US',
-  'es-ES': 'es-ES',
-  'ru-RU': 'ru-RU',
-  'ja-JP': 'ja-JP',
-  'ko-KR': 'ko-KR',
-  'fr-FR': 'fr-FR',
-  'zh-CN': 'zh-CN',
-  'de-DE': 'de-DE',
-  'th-TH': 'th-TH',
-};
-
-function addWavHeader(pcmData: any, sampleRate: number, numChannels: number): any {
-  const byteRate = sampleRate * numChannels * 2;
-  const blockAlign = numChannels * 2;
-  const dataSize = pcmData.length;
-  
-  const header = Buffer.alloc(44);
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + dataSize, 4);
-  header.write('WAVE', 8);
-  header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20);
-  header.writeUInt16LE(numChannels, 22);
-  header.writeUInt32LE(sampleRate, 24);
-  header.writeUInt32LE(byteRate, 28);
-  header.writeUInt16LE(blockAlign, 32);
-  header.writeUInt16LE(16, 34);
-  header.write('data', 36);
-  header.writeUInt32LE(dataSize, 40);
-  
-  return Buffer.concat([header, pcmData]);
+// ElevenLabs voice IDs are long UUIDs; Gemini voice IDs use our short prefixes
+function detectProvider(voiceId: string, explicitProvider?: string): ProviderName {
+  if (explicitProvider === 'elevenlabs') return 'elevenlabs';
+  if (explicitProvider === 'gemini') return 'gemini';
+  // ElevenLabs voice IDs are UUID-like (length > 20, no dashes in our format)
+  if (voiceId.length > 20 && !voiceId.includes('-')) return 'elevenlabs';
+  // UUIDs with hyphens that don't match our short vi-/en-/es- prefix pattern
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidPattern.test(voiceId)) return 'elevenlabs';
+  return 'gemini';
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-    
     const body = await request.json();
-    const { text, voiceId, speed, languageCode, filePrefix } = body;
+    const { text, voiceId, speed = 1.0, languageCode = 'vi-VN', filePrefix, provider: explicitProvider } = body as {
+      text: string;
+      voiceId: string;
+      speed?: number;
+      languageCode?: string;
+      filePrefix?: string;
+      provider?: string;
+    };
 
-    // Validate required fields
     if (!text || !voiceId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Thiếu trường bắt buộc: text và voiceId.',
-          timestamp: new Date().toISOString(),
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Thiếu text hoặc voiceId.' }, { status: 400 });
     }
 
-    const isCustomVoice = !VOICE_MAP[voiceId];
     const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    
-    let audioBuffer: any;
-    let fileExtension = 'wav';
+    const providerName = detectProvider(voiceId, explicitProvider);
 
-    // ========================================================
-    // FISH AUDIO FLOW FOR CUSTOM VOICES
-    // ========================================================
-    if (isCustomVoice && FISH_AUDIO_API_KEY && FISH_AUDIO_API_KEY.trim() !== '' && !voiceId.startsWith('custom_')) {
-      const fishAudioUrl = `https://api.fish.audio/v1/tts`;
-      const response = await fetch(fishAudioUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${FISH_AUDIO_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: cleanText,
-          reference_id: voiceId,
-          format: 'mp3'
-        })
-      });
+    const p = getProvider(providerName);
+    const result = await p.generateSpeech({ text: cleanText, voiceId, speed, languageCode });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Fish Audio TTS Error:', response.status, errorText);
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Lỗi từ Fish Audio TTS: ${response.status}`,
-            timestamp: new Date().toISOString(),
-          },
-          { status: 502 }
-        );
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      audioBuffer = Buffer.from(arrayBuffer);
-      fileExtension = 'mp3'; // Fish Audio returns mp3
-    } 
-    // ========================================================
-    // GEMINI FLOW FOR DEFAULT VOICES (AND MOCK CUSTOM VOICES)
-    // ========================================================
-    else {
-      if (!GEMINI_API_KEY) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Chưa cấu hình GEMINI_API_KEY trên server. Vui lòng khởi động lại server.',
-            timestamp: new Date().toISOString(),
-          },
-          { status: 500 }
-        );
-      }
-
-      // Get Gemini voice name from our voice mapping (fallback to Kore if custom mock voice)
-      const geminiVoice = VOICE_MAP[voiceId] || 'Kore';
-
-      // Build Gemini TTS request
-      const geminiPayload = {
-        contents: [
-          {
-            parts: [{ text: cleanText }],
-          },
-        ],
-        generationConfig: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: geminiVoice,
-              },
-            },
-          },
-        },
-      };
-
-      // Call Gemini TTS API
-      const geminiResponse = await fetch(GEMINI_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geminiPayload),
-        cache: 'no-store'
-      });
-
-      if (!geminiResponse.ok) {
-        const errorBody = await geminiResponse.text();
-        console.error('Gemini TTS Error:', geminiResponse.status, errorBody);
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Lỗi từ Gemini TTS API: ${geminiResponse.status}`,
-            timestamp: new Date().toISOString(),
-          },
-          { status: 503 }
-        );
-      }
-
-      const geminiData = await geminiResponse.json();
-
-      // Extract audio data from response
-      const candidate = geminiData?.candidates?.[0];
-      const audioPart = candidate?.content?.parts?.find(
-        (part: { inlineData?: { mimeType?: string; data?: string } }) =>
-          part.inlineData?.mimeType?.startsWith('audio/')
-      );
-
-      if (!audioPart?.inlineData?.data) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Gemini TTS không trả về dữ liệu audio. Vui lòng thử lại.',
-            timestamp: new Date().toISOString(),
-          },
-          { status: 504 }
-        );
-      }
-
-      const audioBase64 = audioPart.inlineData.data;
-      const audioMime = audioPart.inlineData.mimeType || 'audio/l16';
-      audioBuffer = Buffer.from(audioBase64, 'base64');
-
-      if (audioMime.includes('audio/l16')) {
-        audioBuffer = addWavHeader(audioBuffer, 24000, 1);
-      }
-      fileExtension = 'wav';
-    }
-
-    // Save to public/audio directory
+    // Save audio to public/audio
     const audioDir = path.join(process.cwd(), 'public', 'audio');
-    if (!existsSync(audioDir)) {
-      await mkdir(audioDir, { recursive: true });
-    }
+    if (!existsSync(audioDir)) await mkdir(audioDir, { recursive: true });
 
     const generationId = `gen_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    const filename = `${filePrefix || 'voice_output'}_${generationId}.${fileExtension}`;
+    const filename = `${filePrefix || 'voice_output'}_${generationId}.${result.fileExtension}`;
     const filepath = path.join(audioDir, filename);
+    await writeFile(filepath, result.audioBuffer);
 
-    await writeFile(filepath, audioBuffer);
-
-    // Calculate approximate duration
     const wordCount = cleanText.split(/\s+/).filter(Boolean).length;
-    const baseDuration = (wordCount / 150) * 60;
-    const adjustedDuration = baseDuration / (speed || 1.0);
+    const duration = Math.round((wordCount / 150) * 60 / speed);
 
     return NextResponse.json({
       success: true,
       audioUrl: `/audio/${filename}`,
-      duration: Math.round(adjustedDuration),
-      fileSize: audioBuffer.length,
+      duration,
+      fileSize: result.audioBuffer.length,
       generationId,
       timestamp: new Date().toISOString(),
-      metadata: {
-        voiceId,
-        speed,
-        languageCode,
-        filePrefix,
-        charCount: cleanText.length,
-        wordCount,
-        source: isCustomVoice ? 'fishaudio' : 'gemini',
-      },
+      metadata: { voiceId, speed, languageCode, filePrefix, charCount: cleanText.length, wordCount, source: result.source },
     });
   } catch (err) {
-    console.error('TTS Generate Error:', err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Lỗi server nội bộ khi tạo giọng nói.',
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    console.error('[/api/tts/generate]', message);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

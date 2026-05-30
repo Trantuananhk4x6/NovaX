@@ -41,6 +41,8 @@ export interface Voice {
   isCustom: boolean;
   /** Creation timestamp */
   createdAt: string;
+  /** Which AI provider this voice belongs to */
+  provider?: 'gemini' | 'elevenlabs' | 'custom';
 }
 
 /** Audio recorder state */
