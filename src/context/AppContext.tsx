@@ -58,6 +58,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return;
     try {
       const stored = localStorage.getItem('novax_user');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored) setUser(JSON.parse(stored));
 
       const storedVoices = localStorage.getItem('novax_custom_voices');

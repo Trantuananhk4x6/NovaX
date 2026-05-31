@@ -161,7 +161,7 @@ export function validateTTSText(
   if (charCount > maxChars) {
     return {
       valid: false,
-      error: `Văn bản vượt quá giới hạn ${maxChars.toLocaleString()} ký tự (hiện tại: ${charCount.toLocaleString()}).`,
+      error: `Văn bản vượt quá giới hạn ${maxChars.toLocaleString('vi-VN')} ký tự (hiện tại: ${charCount.toLocaleString('vi-VN')}).`,
     };
   }
 

@@ -50,6 +50,7 @@ export function useHistory(): UseHistoryReturn {
 
   // ── Load history on mount (client-side only) ───────────
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistory(loadHistory());
   }, []);
 

@@ -3,13 +3,11 @@
 // Pricing Page — Subscription plans and VietQR payment integration
 // ============================================================================
 
-import { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useApp } from '@/context/AppContext';
 import { usePayment } from '@/hooks/use-payment';
 import { PRICING_PLANS } from '@/constants/pricing';
 import { CreditCard, Check, X, ShieldCheck, Zap, Download } from 'lucide-react';
-import Image from 'next/image';
 
 export default function PricingPage() {
   const { user } = useApp();

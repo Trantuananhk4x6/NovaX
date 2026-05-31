@@ -9,13 +9,13 @@ import VideoPlayer from '@/components/player/VideoPlayer';
 import VideoTimeline from '@/components/editor/VideoTimeline';
 import SceneCard from '@/components/editor/SceneCard';
 import ContextAnalysisCard from '@/components/editor/ContextAnalysisCard';
-import { useAudioToVideo } from '@/hooks/use-audio-to-video';
+import { useAudioToVideo, AudioToVideoStep } from '@/hooks/use-audio-to-video';
 import { useVideoEditor } from '@/hooks/use-video-editor';
 import { VIDEO_THEMES, ASPECT_RATIO_OPTIONS, RESOLUTION_OPTIONS, FPS_OPTIONS, VIDEO_STYLE_OPTIONS } from '@/constants/video-constants';
+import type { VideoFPS, VideoStyleId } from '@/types/video.types';
 import {
   Film,
   UploadCloud,
-  Mic2,
   Brain,
   Palette,
   Download,
@@ -23,12 +23,9 @@ import {
   ArrowRight,
   ArrowLeft,
   Plus,
-  Loader2,
   Sparkles,
   FileAudio,
   X,
-  Play,
-  Pause,
   ThumbsUp,
   HelpCircle,
   Settings,
@@ -95,7 +92,7 @@ export default function AudioToVideoPage() {
             <div
               className={`step-item ${state.currentStep === step.id ? 'active' : ''} ${state.currentStep > step.id ? 'completed' : ''}`}
               onClick={() => {
-                if (state.currentStep > step.id) goToStep(step.id as any);
+                if (state.currentStep > step.id) goToStep(step.id as AudioToVideoStep);
               }}
             >
               <div className="step-icon">
@@ -284,7 +281,7 @@ export default function AudioToVideoPage() {
                     <select
                       className="form-select"
                       value={state.settings.styleId}
-                      onChange={(e) => updateSettings('styleId', e.target.value as any)}
+                      onChange={(e) => updateSettings('styleId', e.target.value as VideoStyleId)}
                     >
                       {VIDEO_STYLE_OPTIONS.map(s => (
                         <option key={s.id} value={s.id}>{s.icon} {s.name}</option>
@@ -332,7 +329,7 @@ export default function AudioToVideoPage() {
                         <button
                           key={f.value}
                           className={`filter-pill ${state.settings.fps === f.value ? 'active' : ''}`}
-                          onClick={() => updateSettings('fps', f.value as any)}
+                          onClick={() => updateSettings('fps', f.value as VideoFPS)}
                         >
                           {f.label}
                         </button>

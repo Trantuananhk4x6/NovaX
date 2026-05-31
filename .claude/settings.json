@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(wsl -e bash -c \"python3 -c 'import torch; print\\(torch.__version__\\); print\\(torch.cuda.get_arch_list\\(\\)\\)' 2>&1\" 2>&1)",
+      "PowerShell(wsl -e bash -c \"cd /home/tony/ai-narrator && source venv/bin/activate && python3 -c 'import torch; print\\(\\\\\"PyTorch:\\\\\", torch.__version__\\); print\\(\\\\\"CUDA:\\\\\", torch.version.cuda\\); print\\(\\\\\"Arch:\\\\\", torch.cuda.get_arch_list\\(\\)[-2:]\\)' 2>&1\")"
+    ]
+  }
+}

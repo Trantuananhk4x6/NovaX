@@ -4,7 +4,7 @@
 // Shows scene preview, title, duration, and edit controls
 // ============================================================================
 
-import { VideoScene } from '@/types/video.types';
+import { VideoScene, TransitionType } from '@/types/video.types';
 import { TRANSITION_OPTIONS } from '@/constants/video-constants';
 import {
   GripVertical,
@@ -145,7 +145,7 @@ export default function SceneCard({
             <select
               className="form-select"
               value={scene.transition}
-              onChange={(e) => onUpdate(scene.id, { transition: e.target.value as any })}
+              onChange={(e) => onUpdate(scene.id, { transition: e.target.value as TransitionType })}
             >
               {TRANSITION_OPTIONS.map(t => (
                 <option key={t.id} value={t.id}>

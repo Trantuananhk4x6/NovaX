@@ -2,3 +2,5 @@
 [2026-05-26T06:30:16.515Z] Fish Audio API Error: 400 - {"status":400,"message":"Total duration of audios is too long, it should be less than 270 seconds in current version."}
 [2026-05-26T06:32:26.336Z] Fish Audio API Error: 400 - {"status":400,"message":"Total duration of audios is too long, it should be less than 270 seconds in current version."}
 [2026-05-26T06:38:28.732Z] Fish Audio API Error: 400 - {"status":400,"message":"Public model must have a cover image"}
+[2026-05-31T05:10:26.290Z] 404: {"detail":"Not Found"}
+[2026-05-31T05:10:44.969Z] 404: {"detail":"Not Found"}

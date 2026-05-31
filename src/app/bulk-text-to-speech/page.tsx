@@ -52,10 +52,8 @@ export default function BulkTextToSpeechPage() {
 
   const charCount = useMemo(() => countCharacters(text), [text]);
 
-  // Filter voices by selected language
-  const filteredVoices = languageCode
-    ? voices.filter(v => v.languageCode === languageCode)
-    : voices;
+  // Fish Speech is cross-lingual — all voices work for all 9 languages.
+  const filteredVoices = voices;
 
   // Estimated duration
   const estimatedDuration = useMemo(() => {
@@ -92,7 +90,7 @@ export default function BulkTextToSpeechPage() {
       return;
     }
     if (charCount > BULK_TTS_CHAR_LIMIT) {
-      setError(`Văn bản vượt quá giới hạn ${BULK_TTS_CHAR_LIMIT.toLocaleString()} ký tự.`);
+      setError(`Văn bản vượt quá giới hạn ${BULK_TTS_CHAR_LIMIT.toLocaleString('vi-VN')} ký tự.`);
       setShouldShake(true);
       return;
     }
@@ -109,12 +107,11 @@ export default function BulkTextToSpeechPage() {
           text,
           voiceId,
           speed,
-          pitch: 0,
-          stability: 0.75,
-          clarity: 0.75,
+          temperature: 0.7,
+          topP: 0.7,
+          repetitionPenalty: 1.2,
           languageCode,
           filePrefix,
-          splitMode,
         }),
       });
 
@@ -176,12 +173,12 @@ export default function BulkTextToSpeechPage() {
               <div>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '4px' }}>Văn bản dài</h2>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
-                  Nhập đoạn văn bản lớn đến {BULK_TTS_CHAR_LIMIT.toLocaleString()} ký tự
+                  Nhập đoạn văn bản lớn đến {BULK_TTS_CHAR_LIMIT.toLocaleString('vi-VN')} ký tự
                 </p>
               </div>
               <div className={`counter-right ${charCount > 90000 ? 'warning' : ''} ${charCount > 98000 ? 'danger' : ''}`}
                 style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                {charCount.toLocaleString()} / {BULK_TTS_CHAR_LIMIT.toLocaleString()} ký tự
+                {charCount.toLocaleString('vi-VN')} / {BULK_TTS_CHAR_LIMIT.toLocaleString('vi-VN')} ký tự
               </div>
             </div>
 
@@ -303,27 +300,32 @@ export default function BulkTextToSpeechPage() {
                     onChange={(e) => setVoiceId(e.target.value)}
                   >
                     <option value="">Tên giọng nói</option>
-                    {/* Custom voices first */}
                     {voices.filter(v => v.isCustom).length > 0 && (
-                      <optgroup label="🎤 Giọng nói của tôi">
+                      <optgroup label="🎤 Giọng của tôi">
                         {voices.filter(v => v.isCustom).map(v => (
                           <option key={v.id} value={v.id}>{v.label}</option>
                         ))}
                       </optgroup>
                     )}
-                    {/* Group by country */}
-                    {COUNTRIES.map(country => {
-                      const countryVoices = filteredVoices.filter(v =>
-                        v.countryCode === country.code && !v.isCustom
+                    {COUNTRIES.flatMap(country => {
+                      const cvVoices = filteredVoices.filter(v =>
+                        v.engine === 'cosyvoice2' && v.countryCode === country.code && !v.isCustom
                       );
-                      if (countryVoices.length === 0) return null;
-                      return (
-                        <optgroup key={country.code} label={`${country.flag} ${country.name}`}>
-                          {countryVoices.map(v => (
-                            <option key={v.id} value={v.id}>{v.label}</option>
-                          ))}
+                      const koVoices = filteredVoices.filter(v =>
+                        v.engine === 'kokoro' && v.countryCode === country.code && !v.isCustom
+                      );
+                      const groups = [];
+                      if (cvVoices.length > 0) groups.push(
+                        <optgroup key={`cv2-${country.code}`} label={`🎯 [CosyVoice2] ${country.flag} ${country.languageName}`}>
+                          {cvVoices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                         </optgroup>
                       );
+                      if (koVoices.length > 0) groups.push(
+                        <optgroup key={`ko-${country.code}`} label={`🔊 [Kokoro] ${country.flag} ${country.languageName}`}>
+                          {koVoices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                        </optgroup>
+                      );
+                      return groups;
                     })}
                   </select>
                 </div>
@@ -382,7 +384,7 @@ export default function BulkTextToSpeechPage() {
                         <div className="history-meta">
                           <span>{item.voiceName}</span>
                           <span>·</span>
-                          <span>{item.charCount.toLocaleString()} ký tự</span>
+                          <span>{item.charCount.toLocaleString('vi-VN')} ký tự</span>
                         </div>
                       </div>
                     </div>

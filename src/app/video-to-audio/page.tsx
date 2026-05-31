@@ -6,7 +6,7 @@
 import { useState, useRef } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ContextAnalysisCard from '@/components/editor/ContextAnalysisCard';
-import { useVideoToAudio } from '@/hooks/use-video-to-audio';
+import { useVideoToAudio, VideoToAudioStep } from '@/hooks/use-video-to-audio';
 import { useApp } from '@/context/AppContext';
 import { COUNTRIES } from '@/constants/voices';
 import {
@@ -16,8 +16,6 @@ import {
   Download,
   CheckCircle2,
   ArrowRight,
-  ArrowLeft,
-  Loader2,
   Sparkles,
   FileVideo,
   X,
@@ -81,7 +79,7 @@ export default function VideoToAudioPage() {
           <div key={step.id} className="step-item-wrapper">
             <div
               className={`step-item ${state.currentStep === step.id ? 'active' : ''} ${state.currentStep > step.id ? 'completed' : ''}`}
-              onClick={() => { if (state.currentStep > step.id) goToStep(step.id as any); }}
+              onClick={() => { if (state.currentStep > step.id) goToStep(step.id as VideoToAudioStep); }}
             >
               <div className="step-icon">
                 {state.currentStep > step.id ? <CheckCircle2 size={20} /> : <step.icon size={18} />}

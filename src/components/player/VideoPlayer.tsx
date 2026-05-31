@@ -154,7 +154,7 @@ export default function VideoPlayer({
     } else {
       audioRef.current.pause();
     }
-  }, [isPlaying, audioUrl]);
+  }, [isPlaying, audioUrl, currentTime]);
 
   useEffect(() => {
     if (audioRef.current) {

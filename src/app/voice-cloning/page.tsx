@@ -8,7 +8,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import { useApp } from '@/context/AppContext';
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
 import { useVoiceCloning } from '@/hooks/use-voice-cloning';
-import { MIN_RECORDING_DURATION } from '@/types/voice.types';
+import { MIN_RECORDING_DURATION, VoiceCategory } from '@/types/voice.types';
 import { formatDuration } from '@/lib/audio-utils';
 import {
   Mic2,
@@ -29,6 +29,7 @@ import {
 export default function VoiceCloningPage() {
   const { addCustomVoice } = useApp();
   const [activeTab, setActiveTab] = useState<'record' | 'upload'>('record');
+  const [transcript, setTranscript] = useState('');
 
   const {
     recorder,
@@ -46,6 +47,7 @@ export default function VoiceCloningPage() {
     voiceDescription,
     voiceCategory,
     handleAudioFileUpload,
+    clearUploadedFile,
     setVoiceName,
     setVoiceDescription,
     setVoiceCategory,
@@ -92,6 +94,7 @@ export default function VoiceCloningPage() {
 
   // Clear preview when switching tabs
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPlaying(false);
     if (audioRef.current) {
       audioRef.current.pause();
@@ -109,7 +112,7 @@ export default function VoiceCloningPage() {
     if (source) {
       handleStartVoiceCloning(source, 'vi-VN', (newVoice) => {
         addCustomVoice(newVoice);
-      });
+      }, transcript);
     }
   };
 
@@ -118,6 +121,7 @@ export default function VoiceCloningPage() {
   useEffect(() => {
     if (uploadedFile) {
       const url = URL.createObjectURL(uploadedFile);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUploadedPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     } else {
@@ -144,7 +148,7 @@ export default function VoiceCloningPage() {
             Nhân bản giọng nói thành công!
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>
-            Giọng nói "{cloning.result.voice?.name}" đã được thêm vào thư viện của bạn. Bây giờ bạn có thể sử dụng giọng nói này trong Text-to-Speech.
+            Giọng nói &quot;{cloning.result.voice?.name}&quot; đã được thêm vào thư viện của bạn. Bây giờ bạn có thể sử dụng giọng nói này trong Text-to-Speech.
           </p>
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
             <button className="btn btn-secondary" onClick={() => {
@@ -293,7 +297,7 @@ export default function VoiceCloningPage() {
                     <button className="play-pause-btn" onClick={togglePlay} style={{ width: '36px', height: '36px' }}>
                       {isPlaying ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 2 }} />}
                     </button>
-                    <button className="btn-ghost" onClick={() => handleAudioFileUpload(null as any)} style={{ color: 'var(--text-tertiary)' }}>
+                    <button className="btn-ghost" onClick={() => clearUploadedFile()} style={{ color: 'var(--text-tertiary)' }}>
                       <X size={20} />
                     </button>
                   </div>
@@ -358,8 +362,17 @@ export default function VoiceCloningPage() {
         {/* Right: Voice Metadata Form */}
         <div className="settings-panel slide-up">
           <div style={{ padding: '20px', borderBottom: '1px solid var(--border-subtle)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Thông tin giọng nói</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>Điền thông tin cho giọng nói nhân bản của bạn</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Thông tin giọng nói</h3>
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 7px',
+                borderRadius: 20, background: 'rgba(16,185,129,0.12)',
+                color: '#10b981', border: '1px solid rgba(16,185,129,0.3)',
+              }}>CosyVoice2</span>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
+              Zero-shot cloning — chỉ cần 10-30 giây ghi âm
+            </p>
           </div>
 
           <div className="settings-body">
@@ -392,7 +405,7 @@ export default function VoiceCloningPage() {
               <select
                 className="form-select"
                 value={voiceCategory}
-                onChange={(e) => setVoiceCategory(e.target.value as any)}
+                onChange={(e) => setVoiceCategory(e.target.value as VoiceCategory)}
                 disabled={cloning.isCloning}
               >
                 <option value="general">Chung (General)</option>
@@ -403,16 +416,37 @@ export default function VoiceCloningPage() {
               </select>
             </div>
 
-            <div style={{ padding: '16px', background: 'rgba(139, 92, 246, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+            {/* Transcript field — significantly improves CosyVoice2 quality */}
+            <div className="form-group">
+              <label className="form-label">
+                Nội dung đoạn ghi âm
+                <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--accent-green)', fontWeight: 600 }}>
+                  (Khuyến nghị — tăng chất lượng rõ rệt)
+                </span>
+              </label>
+              <textarea
+                className="form-input"
+                placeholder="Gõ lại nội dung bạn đọc trong đoạn ghi âm. VD: Xin chào, tôi là Minh. Hôm nay thời tiết thật đẹp..."
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                style={{ minHeight: '70px', resize: 'vertical' }}
+                disabled={cloning.isCloning}
+              />
+              <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                CosyVoice2 dùng transcript để học cách bạn phát âm từng từ → giọng tự nhiên hơn nhiều.
+              </p>
+            </div>
+
+            <div style={{ padding: '16px', background: 'rgba(16,185,129,0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16,185,129,0.2)' }}>
               <div style={{ display: 'flex', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '8px' }}>
-                <Info size={16} style={{ color: 'var(--accent-violet-light)', flexShrink: 0, marginTop: 2 }} />
+                <Info size={16} style={{ color: '#10b981', flexShrink: 0, marginTop: 2 }} />
                 <strong>Mẹo để có kết quả tốt nhất:</strong>
               </div>
               <ul style={{ paddingLeft: '28px', fontSize: '0.875rem', color: 'var(--text-tertiary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <li>Ghi âm ở môi trường yên tĩnh.</li>
+                <li>Ghi âm 10-30 giây ở môi trường yên tĩnh.</li>
                 <li>Nói rõ ràng, tự nhiên và đều nhịp.</li>
-                <li>Tránh âm thanh nền (quạt, tiếng ồn).</li>
-                <li>File upload không nên có nhạc nền.</li>
+                <li>Điền "Nội dung đoạn ghi âm" để tăng chất lượng.</li>
+                <li>Tránh âm thanh nền (quạt, tiếng ồn, nhạc).</li>
               </ul>
             </div>
           </div>

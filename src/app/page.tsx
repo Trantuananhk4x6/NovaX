@@ -6,10 +6,9 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
-import { useUser, UserButton } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
+import ClerkUserButtonSafe from '@/components/ui/ClerkUserButtonSafe';
 import {
-  BookOpen,
-  Megaphone,
   ArrowRight,
   MessageSquare,
   ThumbsUp,
@@ -38,7 +37,7 @@ export default function DashboardPage() {
             <span>Cần hỗ trợ?</span>
           </button>
           <div className="user-avatar-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
-            <UserButton afterSignOutUrl="/sign-in" />
+            <ClerkUserButtonSafe afterSignOutUrl="/sign-in" />
           </div>
         </div>
       </div>
@@ -53,11 +52,11 @@ export default function DashboardPage() {
       <div className="glass-card slide-up" style={{ marginBottom: '32px' }}>
         <textarea
           ref={textareaRef}
-          className="form-textarea"
+          className="form-textarea textarea-accent"
           placeholder="Bắt đầu nhập hoặc dán văn bản của bạn vào đây..."
           value={quickText}
           onChange={(e) => setQuickText(e.target.value)}
-          style={{ minHeight: '150px', border: '1px solid var(--border-active)' }}
+          style={{ minHeight: '150px' }}
         />
 
         <div className="char-counter">
@@ -66,7 +65,7 @@ export default function DashboardPage() {
             <span>Bắt đầu nhập để ước tính</span>
           </div>
           <div className="counter-right">
-            {quickText.length.toLocaleString()} / 5,000 ký tự
+            {quickText.length.toLocaleString('vi-VN')} / 5,000 ký tự
           </div>
         </div>
 
@@ -78,7 +77,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '16px' }} className="slide-up">
+      <h2 className="section-title slide-up">
         Hành động nhanh
       </h2>
 

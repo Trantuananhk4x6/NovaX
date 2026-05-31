@@ -3,15 +3,13 @@
 // Layer 3 — Manages the 4-step wizard: Upload → Analyze → Customize → Export
 // ============================================================================
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
-  VideoProject,
   VideoScene,
   VideoSettings,
   VideoAnalysis,
   VideoThemeId,
   DEFAULT_VIDEO_SETTINGS,
-  TransitionType,
 } from '@/types/video.types';
 import {
   generateVideoId,
@@ -69,7 +67,6 @@ const initialState: AudioToVideoState = {
 
 export function useAudioToVideo() {
   const [state, setState] = useState<AudioToVideoState>(initialState);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Step 1: Upload Audio ────────────────────────────────
 

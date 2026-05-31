@@ -175,9 +175,9 @@ export function useTTSForm(charLimit: number = TTS_CHAR_LIMIT): UseTTSFormReturn
           text: ttsForm.text,
           voiceId: ttsForm.voiceId,
           speed: ttsForm.speed,
-          pitch: ttsForm.pitch,
-          stability: ttsForm.stability,
-          clarity: ttsForm.clarity,
+          temperature: ttsForm.temperature,
+          topP: ttsForm.topP,
+          repetitionPenalty: ttsForm.repetitionPenalty,
           languageCode: ttsForm.languageCode,
           filePrefix: ttsForm.filePrefix,
         }),
@@ -188,7 +188,7 @@ export function useTTSForm(charLimit: number = TTS_CHAR_LIMIT): UseTTSFormReturn
         try {
           const errorData = await response.json();
           errorMsg = errorData?.details || errorData?.error || errorMsg;
-        } catch (e) {
+        } catch {
           // ignore parsing error
         }
         throw new Error(errorMsg);

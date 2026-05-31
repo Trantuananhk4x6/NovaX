@@ -78,7 +78,7 @@ export default function YouTubeToolsPage() {
   };
 
   // ── Batch State ────────────────────────────────────────
-  const [batchItems, setBatchItems] = useState<BatchVideoItem[]>([
+  const [batchItems] = useState<BatchVideoItem[]>([
     { id: generateVideoId(), audioFileName: 'intro_video_01.mp3', status: 'complete', progress: 100, outputUrl: '#' },
     { id: generateVideoId(), audioFileName: 'tutorial_part2.mp3', status: 'processing', progress: 65 },
     { id: generateVideoId(), audioFileName: 'review_product.wav', status: 'queued', progress: 0 },

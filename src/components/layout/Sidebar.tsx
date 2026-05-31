@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { useState, useEffect } from 'react';
 import {
   Home,
   Grid3X3,
@@ -22,7 +23,8 @@ import {
   MonitorPlay,
   TvMinimalPlay,
 } from 'lucide-react';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
+import ClerkUserButtonSafe from '@/components/ui/ClerkUserButtonSafe';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Bảng điều khiển', icon: Home },
@@ -51,15 +53,22 @@ export default function Sidebar() {
   const { user, sidebarCollapsed, toggleSidebar } = useApp();
   const { user: clerkUser, isLoaded } = useUser();
 
+  // Fix hydration mismatch: sidebarCollapsed is read from localStorage on client
+  // but server always renders with the default (false). Use the server default until
+  // the component is mounted on the client so both renders produce identical HTML.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const collapsed = mounted ? sidebarCollapsed : false;
+
   const displayName = isLoaded ? (clerkUser?.fullName || clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User') : '...';
   const displayEmail = isLoaded ? (clerkUser?.emailAddresses[0]?.emailAddress || '') : '...';
 
   return (
-    <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon">N</div>
-        {!sidebarCollapsed && (
+        {!collapsed && (
           <div className="logo-text">
             <h1>NovaX</h1>
             <span>AI Voice Platform</span>
@@ -67,15 +76,11 @@ export default function Sidebar() {
         )}
         <button
           onClick={toggleSidebar}
-          className="btn-ghost"
-          style={{
-            marginLeft: 'auto',
-            padding: '4px',
-            borderRadius: '6px',
-          }}
-          aria-label={sidebarCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          className="icon-btn"
+          style={{ marginLeft: 'auto' }}
+          aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
         >
-          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
@@ -86,14 +91,14 @@ export default function Sidebar() {
             key={item.href}
             href={item.href}
             className={`nav-item ${pathname === item.href ? 'active' : ''}`}
-            title={sidebarCollapsed ? item.label : undefined}
+            title={collapsed ? item.label : undefined}
           >
             <item.icon size={20} />
-            {!sidebarCollapsed && <span>{item.label}</span>}
+            {!collapsed && <span>{item.label}</span>}
           </Link>
         ))}
 
-        {!sidebarCollapsed && (
+        {!collapsed && (
           <div className="sidebar-section-label">Video Studio</div>
         )}
 
@@ -102,14 +107,14 @@ export default function Sidebar() {
             key={item.href}
             href={item.href}
             className={`nav-item ${pathname === item.href ? 'active' : ''}`}
-            title={sidebarCollapsed ? item.label : undefined}
+            title={collapsed ? item.label : undefined}
           >
             <item.icon size={20} />
-            {!sidebarCollapsed && <span>{item.label}</span>}
+            {!collapsed && <span>{item.label}</span>}
           </Link>
         ))}
 
-        {!sidebarCollapsed && (
+        {!collapsed && (
           <div className="sidebar-section-label">YouTube MMO</div>
         )}
 
@@ -118,14 +123,14 @@ export default function Sidebar() {
             key={item.href}
             href={item.href}
             className={`nav-item ${pathname === item.href ? 'active' : ''}`}
-            title={sidebarCollapsed ? item.label : undefined}
+            title={collapsed ? item.label : undefined}
           >
             <item.icon size={20} />
-            {!sidebarCollapsed && <span>{item.label}</span>}
+            {!collapsed && <span>{item.label}</span>}
           </Link>
         ))}
 
-        {!sidebarCollapsed && (
+        {!collapsed && (
           <div className="sidebar-section-label">Khác</div>
         )}
 
@@ -134,17 +139,17 @@ export default function Sidebar() {
             key={item.href}
             href={item.href}
             className={`nav-item ${pathname === item.href ? 'active' : ''}`}
-            title={sidebarCollapsed ? item.label : undefined}
+            title={collapsed ? item.label : undefined}
           >
             <item.icon size={20} />
-            {!sidebarCollapsed && <span>{item.label}</span>}
+            {!collapsed && <span>{item.label}</span>}
           </Link>
         ))}
       </nav>
 
       {/* Footer: Quota + User */}
       <div className="sidebar-footer">
-        {!sidebarCollapsed && (
+        {!collapsed && (
           <>
             {/* Quota Card */}
             <div className="quota-card">
@@ -153,7 +158,7 @@ export default function Sidebar() {
                 <span>Ký tự còn lại</span>
               </div>
               <div className="quota-number">
-                {user.charsRemaining.toLocaleString()}
+                {user.charsRemaining.toLocaleString('vi-VN')}
               </div>
               <div className="quota-expiry" style={{ marginBottom: '16px' }}>
                 Hết hạn vào: {new Date(user.quotaExpiry).toLocaleDateString('vi-VN')}
@@ -167,9 +172,9 @@ export default function Sidebar() {
         )}
 
         {/* User Info */}
-        <div className="user-info" style={{ marginTop: sidebarCollapsed ? 0 : '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <UserButton afterSignOutUrl="/sign-in" />
-          {!sidebarCollapsed && (
+        <div className="user-info" style={{ marginTop: collapsed ? 0 : '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <ClerkUserButtonSafe afterSignOutUrl="/sign-in" />
+          {!collapsed && (
             <div className="user-details">
               <div className="user-name">{displayName}</div>
               <div className="user-email">{displayEmail}</div>

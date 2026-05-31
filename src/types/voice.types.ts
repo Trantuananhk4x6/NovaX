@@ -15,6 +15,9 @@ export interface Country {
   languageName: string; // e.g., 'Tiếng Việt'
 }
 
+/** TTS engine identifier */
+export type TTSEngine = 'kokoro' | 'cosyvoice2';
+
 /** Voice profile in the catalog */
 export interface Voice {
   id: string;
@@ -31,12 +34,18 @@ export interface Voice {
   gender: 'male' | 'female' | 'neutral';
   /** Short description of the voice character */
   description: string;
-  /** URL to a short preview audio clip */
+  /** URL to a static preview audio clip */
   previewUrl?: string;
+  /** Short sentence spoken in the voice's own language for live preview generation */
+  previewText?: string;
   /** Avatar gradient colors */
   avatarColors: [string, string];
   /** Whether this is a premium voice */
   isPremium?: boolean;
+  /** TTS engine that handles this voice — "kokoro" | "cosyvoice2" */
+  engine: TTSEngine;
+  /** Engine-internal voice ID (Kokoro voice ID, or CosyVoice2 WAV filename stem) */
+  geminiVoiceName?: string;
   /** Whether this is a user-cloned voice */
   isCustom: boolean;
   /** Creation timestamp */

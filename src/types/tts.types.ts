@@ -14,12 +14,24 @@ export interface TTSFormState {
   voiceId: string;
   /** Playback speed multiplier (0.5x – 2.0x) */
   speed: number;
-  /** Pitch adjustment (-20 to +20 semitones) */
-  pitch: number;
-  /** Voice stability (0 – 1, higher = more consistent) */
-  stability: number;
-  /** Voice clarity / similarity enhancement (0 – 1) */
-  clarity: number;
+  /**
+   * Fish Speech temperature (0.1 – 1.0).
+   * Controls creativity / randomness.
+   * Low = stable/monotone, High = expressive/variable. Default: 0.7
+   */
+  temperature: number;
+  /**
+   * Fish Speech top_p (0.1 – 1.0).
+   * Nucleus sampling threshold — how diverse the token pool is.
+   * Low = focused, High = diverse. Default: 0.7
+   */
+  topP: number;
+  /**
+   * Fish Speech repetition_penalty (1.0 – 2.0).
+   * Penalises repeating the same tokens.
+   * 1.0 = off (risk of loops), 1.2 = recommended, 2.0 = aggressive. Default: 1.2
+   */
+  repetitionPenalty: number;
   /** Default break time in seconds for SSML pauses */
   breakTime: number;
   /** Output file name prefix */
@@ -35,9 +47,9 @@ export const DEFAULT_TTS_FORM: TTSFormState = {
   text: '',
   voiceId: '',
   speed: 1.0,
-  pitch: 0,
-  stability: 0.75,
-  clarity: 0.75,
+  temperature: 0.6,
+  topP: 0.7,
+  repetitionPenalty: 1.3,
   breakTime: 1.0,
   filePrefix: 'voice_output',
   languageCode: 'vi-VN',
@@ -80,9 +92,9 @@ export interface TTSGenerateRequest {
   text: string;
   voiceId: string;
   speed: number;
-  pitch: number;
-  stability: number;
-  clarity: number;
+  temperature: number;
+  topP: number;
+  repetitionPenalty: number;
   languageCode: string;
   filePrefix: string;
 }

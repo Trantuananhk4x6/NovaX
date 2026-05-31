@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone test/utility scripts — not part of the Next.js app bundle
+    "test-tts.js",
+    "test.json",
   ]),
 ]);
 

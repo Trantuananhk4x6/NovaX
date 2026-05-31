@@ -6,7 +6,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   TimelineTrack,
-  TimelineClip,
   VideoScene,
 } from '@/types/video.types';
 
@@ -54,6 +53,7 @@ export function useVideoEditor(
 
   // Sync tracks when external data changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(prev => {
       // Prevent infinite loop by deeply comparing tracks
       if (

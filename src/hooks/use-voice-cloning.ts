@@ -21,13 +21,15 @@ interface UseVoiceCloningReturn {
 
   // ── Actions ────────────────────────────────────────────
   handleAudioFileUpload: (file: File) => AudioFileValidation;
+  clearUploadedFile: () => void;
   setVoiceName: (name: string) => void;
   setVoiceDescription: (desc: string) => void;
   setVoiceCategory: (cat: VoiceCategory) => void;
   handleStartVoiceCloning: (
     audioSource: Blob | File,
     languageCode: string,
-    onSuccess: (newVoice: Voice) => void
+    onSuccess: (newVoice: Voice) => void,
+    transcript?: string,
   ) => Promise<void>;
   resetCloning: () => void;
 }
@@ -84,7 +86,8 @@ export function useVoiceCloning(): UseVoiceCloningReturn {
   const handleStartVoiceCloning = useCallback(async (
     audioSource: Blob | File,
     languageCode: string,
-    onSuccess: (newVoice: Voice) => void
+    onSuccess: (newVoice: Voice) => void,
+    transcript = '',
   ) => {
     if (!voiceName.trim()) {
       setCloning(prev => ({
@@ -101,6 +104,7 @@ export function useVoiceCloning(): UseVoiceCloningReturn {
     formData.append('voiceDescription', voiceDescription);
     formData.append('category', voiceCategory);
     formData.append('languageCode', languageCode);
+    formData.append('transcript', transcript);
 
     // Step 2: Start cloning state
     setCloning({
@@ -189,7 +193,7 @@ export function useVoiceCloning(): UseVoiceCloningReturn {
         result: null,
       });
     }
-  }, [voiceName, voiceDescription, voiceCategory]);
+  }, [voiceName, voiceDescription, voiceCategory]); // transcript passed as arg, not state
 
   // ─────────────────────────────────────────────────────────
   // resetCloning — Clear all cloning state
@@ -213,6 +217,11 @@ export function useVoiceCloning(): UseVoiceCloningReturn {
     setVoiceCategory('general');
   }, []);
 
+  const clearUploadedFile = useCallback(() => {
+    setUploadedFile(null);
+    setUploadError(null);
+  }, []);
+
   return {
     cloning,
     uploadedFile,
@@ -221,6 +230,7 @@ export function useVoiceCloning(): UseVoiceCloningReturn {
     voiceDescription,
     voiceCategory,
     handleAudioFileUpload,
+    clearUploadedFile,
     setVoiceName,
     setVoiceDescription,
     setVoiceCategory,
